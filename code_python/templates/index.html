@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>IOT - Project</title>
+    <script src="https://kit.fontawesome.com/d7036c87ae.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div>
+        Le capteur est dans l'état suivant : <span id="state">Waiting for answer</span>
+    </div>
+    <div>
+        <input type="button" value="Actualiser l'état" onclick="getDataAsync('state', span_sensor)">
+        <input type="button" value="Changer l'état" disabled>
+    </div>
+    <div>
+        Le capteur est en mode : <span id="mode">Waiting for answer</span>
+    </div>
+    <div>
+        <input type="button" value="Actualiser le mode" onclick="getDataAsync('mode', mode_sensor)">
+        <input type="button" value="Changer le mode" disabled>
+    </div>
+    <div>
+        Mot de passe de jour : <span>Waiting for answer</span>
+    </div>
+    <div>
+        <input type="button" value="Actualiser le mdp" disabled>
+        <input type="button" value="Changer le mdp" disabled>
+    </div>
+    <div>
+        Mot de passe de nuit : <span>Waiting for answer</span>
+    </div>
+    <div>
+        <input type="button" value="Actualiser le mdp" disabled>
+        <input type="button" value="Changer le mdp" disabled>
+    </div>
+
+    <div style="margin-top: 32px; margin-bottom: 16px">
+        <input type="button" value="Actualiser les logs" onclick="getLogsAsync()">
+    </div>
+    <div id="logs" style="width: 500px;">
+    </div>
+
+    <script>
+        const span_sensor = document.getElementById('state');
+        const mode_sensor = document.getElementById('mode');
+
+        getLogsAsync().then(() => {});
+        getDataAsync('state', span_sensor).then(() => {
+            getDataAsync('mode', mode_sensor).then(() => {});
+        });
+
+        async function getDataAsync(data, beacon) {
+            try {
+                beacon.innerHTML = '<i class="fa-solid fa-spinner fa-spin-pulse"></i>';
+                const apiResponse = await fetch('http://127.0.0.1:5000/' + data);
+                const state = (await apiResponse.json()).data;
+                beacon.innerHTML = state;
+                await getLogsAsync();
+
+            } catch(error) {
+                alert('Failed to fetch data : ' + data);
+            }
+        }
+
+        async function getLogsAsync() {
+            try {
+                const logsDiv = document.getElementById('logs');
+                logsDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin-pulse"></i>';
+
+                const apiResponse = await fetch('http://127.0.0.1:5000/logs');
+                const logs = (await apiResponse.json()).data;
+                console.log(logs);
+
+                logsDiv.innerHTML = '';
+
+                if (logs.length == 0) {
+                    const noResultDiv = document.createElement('div');
+                    noResultDiv.id = 'no-result';
+                    noResultDiv.innerHTML = 'Aucun logs trouvé';
+                    logsDiv.appendChild(noResultDiv);
+                } else {
+                    logs.forEach((log, index) => {
+                        const logDiv = document.createElement('div');
+                        logDiv.id = 'log-' + index;
+                        logDiv.style = 'display:flex; justify-content: space-between';
+
+                        log.forEach((info, index) => {
+                            const infoDiv = document.createElement('div');
+                            infoDiv.innerHTML = info;
+                            infoDiv.style = index == 0 ? 'width: auto; margin-right: 8px' : 'width: 100%';
+                            logDiv.appendChild(infoDiv);
+                        });
+
+                        logsDiv.appendChild(logDiv);
+                    });
+                }
+
+            } catch(error) {
+            console.log(error);
+                alert('Failed to get last logs');
+            }
+        }
+    </script>
+</body>
+</html>
